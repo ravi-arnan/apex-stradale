@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -19,6 +20,19 @@ scene.environment = new THREE.PMREMGenerator(renderer)
   .fromScene(new RoomEnvironment()).texture
 
 const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100)
+
+// free-orbit on the Configure section (mouse only, so touch scroll isn't trapped)
+const ORBIT_OK = window.matchMedia('(pointer: fine)').matches
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.enableDamping = true
+controls.enablePan = false
+controls.enableZoom = false // let the wheel keep scrolling the page
+controls.rotateSpeed = 0.55
+controls.minPolarAngle = 0.15
+controls.maxPolarAngle = Math.PI * 0.52 // don't dip under the floor
+controls.target.set(0, 0.55, 0)
+controls.enabled = false
+let orbiting = false
 
 // ---------- floor ----------
 const grid = new THREE.GridHelper(120, 60, 0x2a2a30, 0x1c1c21)
@@ -62,7 +76,10 @@ let gltfParser = null
 let variantsDef = null
 let hood = null
 let doorL = null
+let wheels = []
 let modelReady = false
+
+const WHEEL_SPIN = 0.012 // rad/frame, hero idle-spin (fades out with scroll)
 
 const COCKPIT_KF = 3 // keyframe index where the left door is fully open
 const DOOR_MAX_ANGLE = -0.9 // rad, negative swings outward on its vertical hinge
@@ -90,7 +107,9 @@ new GLTFLoader().load(
     car.add(shadow)
     hood = model.getObjectByName('BodyHood')
     doorL = model.getObjectByName('BodyDoorLColor1')
-    window.APEX = { car } // dev: inspect node positions from the console
+    wheels = ['WheelFrontL', 'WheelFrontR', 'WheelRearL', 'WheelRearR']
+      .map((n) => model.getObjectByName(n)).filter(Boolean)
+    window.APEX = { car, controls } // dev: inspect node positions from the console
     modelReady = true
     loaderEl.classList.add('done')
     document.body.classList.add('ready')
@@ -298,11 +317,11 @@ function render() {
   let doorTarget = 0
 
   if (activeSub) {
-    // inspector: fixed pose framing the subsystem, with a slow reveal orbit
+    if (orbiting) { controls.enabled = false; orbiting = false }
+    // inspector: fixed pose framing the subsystem (no sweep — it swung into bad angles)
     const c = activeSub.cam
     targetLook.set(c.look[0], c.look[1], c.look[2])
-    const orbit = (reducedMotion || SNAP) ? 0 : Math.sin(t * 0.15) * 0.3
-    targetPos.set(c.pos[0], c.pos[1], c.pos[2]).sub(targetLook).applyAxisAngle(UP, orbit).add(targetLook)
+    targetPos.set(c.pos[0], c.pos[1], c.pos[2])
     hoodTarget = activeSub.hood ? HOOD_MAX_ANGLE : 0
     doorTarget = activeSub.door ? DOOR_MAX_ANGLE : 0
   } else {
@@ -323,11 +342,34 @@ function render() {
       const fade = Math.max(0, 1 - progress * 1.6)
       const angle = (Math.sin(t * 0.18) * 0.35 + pointerX * 0.12) * fade
       targetPos.applyAxisAngle(UP, angle)
+      // wheels idle-spin in the hero, tied to the same fade.
+      // rotateX (about each node's own local axle) not rotation.x: the front
+      // wheels carry a compound baked rest rotation, so nudging the euler.x
+      // component tumbles them off-axis instead of spinning them.
+      for (const w of wheels) w.rotateX(WHEEL_SPIN * fade)
     }
 
     // panels articulate as their keyframe approaches (scroll-scrubbed)
     hoodTarget = proximity(progress, ENGINE_KF, 1.8) * HOOD_MAX_ANGLE
     doorTarget = proximity(progress, COCKPIT_KF, 1.5) * DOOR_MAX_ANGLE
+
+    // hand the camera to OrbitControls once the scroll path has actually settled
+    // on the Configure view. Wait for the damped camera to converge on the last
+    // keyframe (not just for the scroll to cross a threshold) so the takeover is
+    // seamless — no snap. Hysteresis on progress releases it when scrolling back up.
+    const last = KEYFRAMES[KEYFRAMES.length - 1]
+    const canOrbit = ORBIT_OK && DEBUG_KF === null
+    if (canOrbit && !orbiting && progress > 4.9 && camera.position.distanceTo(last.pos) < 0.15) {
+      controls.target.copy(last.look)
+      controls.enabled = true
+      controls.update() // camera is already at KF5, so this changes nothing visually
+      orbiting = true
+    } else if (orbiting && progress < 4.8) {
+      controls.enabled = false
+      orbiting = false
+      camPos.copy(camera.position) // resume the keyframe path from here
+      camLook.copy(controls.target)
+    }
   }
 
   const rate = SNAP ? 1 : 0.08
@@ -335,11 +377,15 @@ function render() {
   if (doorL) doorL.rotation.z += (doorTarget - doorL.rotation.z) * rate
   if (DEBUG_DOOR && doorL) doorL.rotation.z = Number(urlParams.get('door')) || 0
 
-  const damp = SNAP ? 1 : 0.06
-  camPos.lerp(targetPos, damp)
-  camLook.lerp(targetLook, damp)
-  camera.position.copy(camPos)
-  camera.lookAt(camLook)
+  if (orbiting) {
+    controls.update()
+  } else {
+    const damp = SNAP ? 1 : 0.06
+    camPos.lerp(targetPos, damp)
+    camLook.lerp(targetLook, damp)
+    camera.position.copy(camPos)
+    camera.lookAt(camLook)
+  }
 
   if (activeSub) updateHotspots()
 
