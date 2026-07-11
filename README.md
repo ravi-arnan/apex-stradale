@@ -2,7 +2,7 @@
 
 A scroll-driven WebGL microsite for a fictional concept sports car. Scrolling moves a cinematic camera through six framed views of the car, including a look inside the cockpit with the door open and a top-down pass over the open engine bay, followed by an interactive component inspector and a paint configurator.
 
-Built with vanilla Three.js and Vite. No framework, no React, no backend.
+Built with React Three Fiber, GSAP ScrollTrigger, and Lenis on top of Three.js and Vite. No backend.
 
 ## Highlights
 
@@ -14,12 +14,14 @@ Built with vanilla Three.js and Vite. No framework, no React, no backend.
 
 ## Tech stack
 
-| Area      | Choice                                         |
-| --------- | ---------------------------------------------- |
-| Bundler   | Vite 8                                          |
-| 3D        | Three.js 0.185 (`three/addons` for loaders/env) |
-| Fonts     | Space Grotesk and Inter via Google Fonts        |
-| Framework | None                                           |
+| Area      | Choice                                              |
+| --------- | --------------------------------------------------- |
+| Framework | React 19                                            |
+| 3D        | React Three Fiber and drei, over Three.js 0.185     |
+| Scroll    | GSAP ScrollTrigger for progress, Lenis for smoothing |
+| State     | Zustand for UI state, plain refs for per-frame data |
+| Bundler   | Vite 8                                              |
+| Fonts     | Space Grotesk and Inter via Google Fonts            |
 
 ## Getting started
 
@@ -35,15 +37,23 @@ npm run preview    # serve the production build on http://localhost:4173
 ## Project structure
 
 ```
-index.html            markup: nav, six section panels, loader, footer
-src/style.css         design tokens, layout, and CSS motion
-src/main.js           Three.js scene, scroll camera, articulation, configurator
-public/models/car.glb the car model (GLB, ~12 MB)
+index.html             React root
+src/main.jsx           app entry
+src/App.jsx            DOM overlay: nav, six section panels, footer, inspector UI
+src/Scene.jsx          R3F Canvas: environment, grid, contact shadow
+src/Car.jsx            model load, normalize, articulation, variants, isolation
+src/CameraRig.jsx      scroll camera interpolation and OrbitControls handoff
+src/Hotspots.jsx       inspector labels projected onto model nodes
+src/useScrollDriver.js Lenis smooth scroll plus GSAP ScrollTrigger progress
+src/constants.js       keyframes, subsystems, colorways, tuning values
+src/store.js           Zustand UI state and shared per-frame refs
+src/style.css          design tokens, layout, and CSS motion
+public/models/car.glb  the car model (GLB, ~12 MB)
 ```
 
 ## How the scroll works
 
-Each frame, the render loop computes a `progress` value from scroll position, a float from 0 to 5. It picks the two bracketing keyframes, smoothstep interpolates the camera position and look-at target between them, then damps the camera toward that target so motion feels weighted rather than linear.
+Lenis drives smooth scrolling and a GSAP ScrollTrigger maps page scroll to a `progress` value, a float from 0 to 5. Each frame the camera rig picks the two bracketing keyframes, smoothstep interpolates the camera position and look-at target between them, then damps the camera toward that target so motion feels weighted rather than linear.
 
 | # | Section     | View                                        |
 | - | ----------- | ------------------------------------------- |
