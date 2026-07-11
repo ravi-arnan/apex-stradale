@@ -207,7 +207,9 @@ main { position: relative; z-index: 5; pointer-events: none; }
   max-width: 30rem;
   padding: 2rem;
   margin: -2rem;
-  background: radial-gradient(ellipse 120% 100% at center, oklch(13% 0.01 260 / 0.78), transparent 72%);
+  /* soft vignette behind the copy; fades out before the panel edges so it never
+     clips into a visible box over the car (most noticeable on the Configure view) */
+  background: radial-gradient(ellipse 92% 78% at 50% 42%, oklch(13% 0.01 260 / 0.82), transparent 70%);
   border-radius: 2rem;
 }
 .copy .kicker { display: flex; align-items: center; gap: 0.8rem; }
