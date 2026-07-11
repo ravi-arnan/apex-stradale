@@ -4,13 +4,15 @@ A scroll-driven WebGL microsite for a fictional concept sports car. Scrolling mo
 
 Built with React Three Fiber, GSAP ScrollTrigger, and Lenis on top of Three.js and Vite. No backend.
 
+**Live demo:** [apex-stradale.vercel.app](https://apex-stradale.vercel.app)
+
 ## Highlights
 
 - **Scroll-driven camera.** Scroll position maps to a path through six camera keyframes, smoothstep interpolated and damped for weighted, cinematic motion.
 - **Articulated model.** The hood and driver door open as their section enters view, scrubbed in both directions rather than played as one-shot animations.
 - **Component inspector.** An interactive mode that isolates a subsystem (powertrain, wheel and brake, cockpit) by ghosting the rest of the car, with HTML hotspots projected onto real model nodes each frame.
 - **Paint configurator.** Three factory colorways baked into the model as `KHR_materials_variants`, switched at runtime.
-- **Zero configuration.** No environment variables, no API keys, no build config beyond Vite defaults. The entire site is three files.
+- **Zero configuration.** No environment variables, no API keys, no backend. It builds to a static bundle with Vite defaults.
 
 ## Tech stack
 
@@ -63,6 +65,10 @@ Lenis drives smooth scrolling and a GSAP ScrollTrigger maps page scroll to a `pr
 | 3 | Cockpit     | inside, driver eye to the dash              |
 | 4 | Performance | above the open engine bay, looking down     |
 | 5 | Configure   | head-on front, with free orbit on the car   |
+
+## Deployment
+
+Deployed on Vercel as a static build. Vercel auto-detects Vite, runs `npm run build`, and serves `dist/`. No environment variables are required. Pushes to the default branch redeploy automatically once the Git integration is connected.
 
 ## Model and credits
 
