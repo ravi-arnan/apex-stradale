@@ -78,7 +78,7 @@ body {
 }
 
 /* ---------- canvas ---------- */
-#stage {
+.stage {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -329,10 +329,10 @@ body.ready #inspect-toggle { opacity: 1; }
 
 #inspector { position: fixed; inset: 0; z-index: 20; display: none; }
 body.inspecting #inspector { display: block; }
-body.inspecting > main,
-body.inspecting > .nav,
-body.inspecting > .site-footer,
-body.inspecting > #inspect-toggle {
+body.inspecting main,
+body.inspecting .nav,
+body.inspecting .site-footer,
+body.inspecting #inspect-toggle {
   opacity: 0;
   pointer-events: none;
   transition: opacity 400ms ease;
@@ -456,8 +456,8 @@ body.inspecting > #inspect-toggle {
 /* ---------- motion ---------- */
 @media (prefers-reduced-motion: no-preference) {
   /* canvas fades up once the model is ready */
-  #stage { opacity: 0; transition: opacity 1400ms ease; }
-  body.ready #stage { opacity: 1; }
+  .stage { opacity: 0; transition: opacity 1400ms ease; }
+  body.ready .stage { opacity: 1; }
 
   /* hero entrance: kicker, masked headline lines, lede, cue */
   .panel-hero .kicker,
