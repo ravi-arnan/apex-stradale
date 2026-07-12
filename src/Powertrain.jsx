@@ -364,8 +364,9 @@ const LOCAL_MAX = 3.2 // longest local extent (front accessories -> transaxle ta
 const _off = new THREE.Vector3()
 
 export function Powertrain() {
-  const activeSubId = useStore((s) => s.activeSubId)
+  const ready = useStore((s) => s.ready)
   const exploded = useStore((s) => s.exploded)
+  const rootRef = useRef()
   const fanRef = useRef()
   const crankRef = useRef()
   const pistonRefs = useRef([])
@@ -373,8 +374,9 @@ export function Powertrain() {
   const innerRef = useRef()
   const anim = useRef({ t: 0, turn: 0 }).current
 
+  // the Engine node is static once the model is normalized, so fit just once
   const fit = useMemo(() => {
-    if (activeSubId !== 'powertrain' || !view.scene) return null
+    if (!ready || !view.scene) return null
     const node = view.scene.getObjectByName('Engine')
     if (!node) return null
     const box = nodeBounds(node)
@@ -384,9 +386,11 @@ export function Powertrain() {
     const k = (0.92 * Math.max(size.x, size.y, size.z)) / LOCAL_MAX
     const yaw = size.x > size.z ? Math.PI / 2 : 0
     return { center, k, yaw }
-  }, [activeSubId])
+  }, [ready])
 
   useFrame((_, dt) => {
+    // only draw when the engine is exposed (Car.jsx sets the shared signal)
+    if (rootRef.current) rootRef.current.visible = view.engineExposed
     // ease the explode factor toward its target and drive each component out
     anim.t += ((exploded ? 1 : 0) - anim.t) * Math.min(1, dt * 6)
     for (const p of PARTS) {
@@ -408,7 +412,7 @@ export function Powertrain() {
 
   if (!fit) return null
   return (
-    <group position={fit.center} scale={fit.k}>
+    <group ref={rootRef} visible={false} position={fit.center} scale={fit.k}>
       <group ref={innerRef} rotation-y={fit.yaw} position={[0, -0.05, -0.3]}>
         {PARTS.map((p) => (
           <group key={p.key} ref={(el) => { if (el) groupRefs.current[p.key] = el }}>

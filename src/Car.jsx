@@ -40,11 +40,15 @@ export function Car() {
       scene.userData._normalized = true
     }
 
+    const engineMeshes = []
+    scene.traverse((o) => { if (o.isMesh && /Engine/.test(nameChain(o))) engineMeshes.push(o) })
+
     return {
       hood: scene.getObjectByName('BodyHood'),
       doorL: scene.getObjectByName('BodyDoorLColor1'),
       wheels: ['WheelFrontL', 'WheelFrontR', 'WheelRearL', 'WheelRearR']
         .map((n) => scene.getObjectByName(n)).filter(Boolean),
+      engineMeshes, // crude glb engine box; hidden whenever the procedural V8 stands in
       variants: userData.gltfExtensions?.KHR_materials_variants?.variants ?? null,
     }
   }, [scene, userData])
@@ -77,12 +81,6 @@ export function Car() {
     scene.traverse((o) => {
       if (!o.isMesh) return
       const path = nameChain(o)
-      // powertrain swaps the crude glb engine box for the procedural V8 (Powertrain.jsx)
-      if (sub?.swapEngine && /Engine/.test(path)) {
-        if (!o.userData._hidden) { o.userData._hidden = true; o.visible = false }
-        return
-      }
-      if (o.userData._hidden) { o.visible = true; o.userData._hidden = false }
       if (sub && sub.keep.test(path)) {
         if (o.userData._stash) { o.material = o.userData._stash; o.userData._stash = null }
       } else if (sub) {
@@ -94,13 +92,24 @@ export function Car() {
   }, [activeSubId, scene, variant])
 
   // ---- per-frame articulation: hood, door, wheel idle-spin ----
-  const state = useRef({ hood: 0, door: 0 }).current
+  const state = useRef({ hood: 0, door: 0, boxHidden: false }).current
   useFrame(() => {
-    const { hood, doorL, wheels } = nodes
+    const { hood, doorL, wheels, engineMeshes } = nodes
     const activeSub = SUBSYSTEMS.find((s) => s.id === useStore.getState().activeSubId)
     const progress = scroll.progress
     let hoodTarget = 0
     let doorTarget = 0
+
+    // Swap the crude glb box for the procedural V8 whenever the engine is exposed:
+    // powertrain inspector, or the open-hood moment of the scroll tour. Threshold is
+    // low so the swap lands while the hood still hides it, masking the pop.
+    const engineProx = activeSub ? 0 : proximity(progress, ENGINE_KF, 1.8)
+    const exposed = activeSub ? !!activeSub.swapEngine : engineProx > 0.12
+    view.engineExposed = exposed
+    if (state.boxHidden !== exposed) {
+      for (const m of engineMeshes) m.visible = !exposed
+      state.boxHidden = exposed
+    }
 
     if (activeSub) {
       hoodTarget = activeSub.hood ? HOOD_MAX_ANGLE : 0

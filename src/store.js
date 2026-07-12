@@ -20,4 +20,4 @@ export const scroll = { progress: 0 }
 
 // Live three objects shared with the DOM-side hotspots (which project model
 // nodes to screen each frame but must render in the react-dom tree, not R3F's).
-export const view = { camera: null, scene: null }
+export const view = { camera: null, scene: null, engineExposed: false }
