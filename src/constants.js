@@ -32,6 +32,7 @@ export const SUBSYSTEMS = [
     label: 'Powertrain',
     desc: 'Naturally aspirated V8, mounted up front.',
     keep: /Engine|Axle/,
+    swapEngine: true, // hide the crude glb engine box; Powertrain.jsx renders a detailed V8 in its place
     hood: true,
     cam: { pos: [2.4, 2.0, -3.9], look: [0, 0.5, -1.95] },
     hotspots: [

@@ -11,9 +11,12 @@ const _v = new THREE.Vector3()
 // right edge; hidden when behind the camera.
 export function Hotspots() {
   const activeSubId = useStore((s) => s.activeSubId)
+  const exploded = useStore((s) => s.exploded)
   const refs = useRef([])
 
-  const sub = SUBSYSTEMS.find((s) => s.id === activeSubId)
+  // the exploded powertrain draws its own per-component labels, so drop the
+  // subsystem-level hotspots to avoid stacking two label systems on one view
+  const sub = exploded ? null : SUBSYSTEMS.find((s) => s.id === activeSubId)
   const markers = useMemo(() => {
     if (!sub || !view.scene) return []
     return sub.hotspots

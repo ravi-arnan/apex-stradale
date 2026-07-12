@@ -76,7 +76,14 @@ export function Car() {
     const sub = SUBSYSTEMS.find((s) => s.id === activeSubId)
     scene.traverse((o) => {
       if (!o.isMesh) return
-      if (sub && sub.keep.test(nameChain(o))) {
+      const path = nameChain(o)
+      // powertrain swaps the crude glb engine box for the procedural V8 (Powertrain.jsx)
+      if (sub?.swapEngine && /Engine/.test(path)) {
+        if (!o.userData._hidden) { o.userData._hidden = true; o.visible = false }
+        return
+      }
+      if (o.userData._hidden) { o.visible = true; o.userData._hidden = false }
+      if (sub && sub.keep.test(path)) {
         if (o.userData._stash) { o.material = o.userData._stash; o.userData._stash = null }
       } else if (sub) {
         if (!o.userData._stash) { o.userData._stash = o.material; o.material = GHOST_MAT }

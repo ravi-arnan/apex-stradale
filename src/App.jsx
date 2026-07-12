@@ -34,6 +34,8 @@ function Inspector() {
   const activeSubId = useStore((s) => s.activeSubId)
   const openInspector = useStore((s) => s.openInspector)
   const closeInspector = useStore((s) => s.closeInspector)
+  const exploded = useStore((s) => s.exploded)
+  const toggleExploded = useStore((s) => s.toggleExploded)
   const active = SUBSYSTEMS.find((s) => s.id === activeSubId) || SUBSYSTEMS[0]
 
   return (
@@ -69,6 +71,19 @@ function Inspector() {
               </button>
             ))}
           </div>
+          {activeSubId === 'powertrain' && (
+            <div className="inspect-mode">
+              <span className="mode-label">Exploded</span>
+              <button
+                type="button"
+                className="switch"
+                role="switch"
+                aria-checked={exploded}
+                aria-label="Exploded component view"
+                onClick={toggleExploded}
+              />
+            </div>
+          )}
           <button className="inspect-close" type="button" onClick={closeInspector}>Close</button>
         </div>
       </div>

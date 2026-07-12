@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { Car } from './Car'
+import { Powertrain } from './Powertrain'
 import { CameraRig } from './CameraRig'
 import { KEYFRAMES } from './constants'
 
@@ -57,6 +58,7 @@ export function Scene() {
       <CameraRig />
       <Suspense fallback={null}>
         <Car />
+        <Powertrain />
         <ContactShadow />
       </Suspense>
     </Canvas>

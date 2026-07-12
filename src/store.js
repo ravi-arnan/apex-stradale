@@ -4,10 +4,12 @@ import { create } from 'zustand'
 export const useStore = create((set) => ({
   ready: false,
   activeSubId: null, // null = scroll tour; otherwise the inspected subsystem id
+  exploded: false, // powertrain component breakdown
   variant: 'Carmine Candy',
   setReady: (ready) => set({ ready }),
-  openInspector: (id) => set({ activeSubId: id }),
-  closeInspector: () => set({ activeSubId: null }),
+  openInspector: (id) => set({ activeSubId: id, exploded: false }),
+  closeInspector: () => set({ activeSubId: null, exploded: false }),
+  toggleExploded: () => set((s) => ({ exploded: !s.exploded })),
   setVariant: (variant) => set({ variant }),
 }))
 

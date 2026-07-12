@@ -435,6 +435,55 @@ body.inspecting #inspect-toggle {
 }
 .inspect-close { letter-spacing: 0.14em; }
 
+/* exploded-view mode toggle — a switch, deliberately unlike the subsystem tabs */
+.inspect-mode {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid var(--line);
+}
+.mode-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.switch {
+  position: relative;
+  width: 42px;
+  height: 22px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 200ms, border-color 200ms;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transform: translateY(-50%);
+  transition: left 220ms var(--ease-out), background 200ms;
+}
+.switch[aria-checked="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.switch[aria-checked="true"]::after {
+  left: 22px;
+  background: #fff;
+}
+.switch:hover { border-color: var(--text-dim); }
+.switch:focus-visible { outline: 1px solid var(--text); outline-offset: 3px; }
+
 /* ---------- footer ---------- */
 .site-footer {
   position: relative;
