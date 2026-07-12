@@ -391,7 +391,8 @@ body.inspecting #inspect-toggle {
   align-items: center;
   gap: clamp(1rem, 3vw, 2rem);
   padding: 0.9rem 1.1rem 0.9rem 1.6rem;
-  max-width: min(94vw, 940px);
+  width: max-content;
+  max-width: min(96vw, 1060px);
   background: oklch(15% 0.01 260 / 0.82);
   backdrop-filter: blur(14px);
   border: 1px solid var(--line);
