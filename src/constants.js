@@ -60,7 +60,7 @@ export const SUBSYSTEMS = [
     desc: 'A single central seat, two set behind.',
     keep: /Interior/,
     door: true,
-    cam: { pos: [-2.9, 1.6, 0.3], look: [0, 0.7, -0.75] },
+    cam: { pos: [-1.75, 1.12, 0.42], look: [0.05, 0.78, -0.72] },
     hotspots: [
       { node: 'InteriorSteeringWheel01', label: 'Steering', spec: 'Squared-off yoke' },
       { node: 'InteriorSeatsColor2', label: 'Driver seat', spec: 'Central position' },
