@@ -100,17 +100,6 @@ export function Car() {
     let hoodTarget = 0
     let doorTarget = 0
 
-    // Swap the crude glb box for the procedural V8 whenever the engine is exposed:
-    // powertrain inspector, or the open-hood moment of the scroll tour. Threshold is
-    // low so the swap lands while the hood still hides it, masking the pop.
-    const engineProx = activeSub ? 0 : proximity(progress, ENGINE_KF, 1.8)
-    const exposed = activeSub ? !!activeSub.swapEngine : engineProx > 0.12
-    view.engineExposed = exposed
-    if (state.boxHidden !== exposed) {
-      for (const m of engineMeshes) m.visible = !exposed
-      state.boxHidden = exposed
-    }
-
     if (activeSub) {
       hoodTarget = activeSub.hood ? HOOD_MAX_ANGLE : 0
       doorTarget = activeSub.door ? DOOR_MAX_ANGLE : 0
@@ -129,6 +118,16 @@ export function Car() {
     const rate = 0.08
     if (hood) { state.hood += (hoodTarget - state.hood) * rate; hood.rotation.x = state.hood }
     if (doorL) { state.door += (doorTarget - state.door) * rate; doorL.rotation.z = state.door }
+
+    // Swap the crude glb box for the procedural V8 whenever the engine is exposed.
+    // Keyed off the *rendered* hood angle (not raw scroll proximity) so the hood's
+    // smoothing lag can never reveal the box through an already-open hood.
+    const exposed = activeSub ? !!activeSub.swapEngine : state.hood > 0.02
+    view.engineExposed = exposed
+    if (state.boxHidden !== exposed) {
+      for (const m of engineMeshes) m.visible = !exposed
+      state.boxHidden = exposed
+    }
   })
 
   return <primitive object={scene} />
