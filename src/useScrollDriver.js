@@ -3,11 +3,9 @@ import Lenis from 'lenis'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { scroll } from './store'
-import { KEYFRAMES as KF } from './constants'
+import { KEYFRAMES as KF, REDUCED_MOTION } from './constants'
 
 gsap.registerPlugin(ScrollTrigger)
-
-const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 // count a stat value up from 0 when its section reveals
 function countUp(dd) {
@@ -35,7 +33,7 @@ function countUp(dd) {
 // the CSS copy reveals and the stat count-up.
 export function useScrollDriver() {
   useEffect(() => {
-    const lenis = reducedMotion ? null : new Lenis({ lerp: 0.1, wheelMultiplier: 1 })
+    const lenis = REDUCED_MOTION ? null : new Lenis({ lerp: 0.1, wheelMultiplier: 1 })
 
     if (lenis && import.meta.env.DEV) window.__lenis = lenis // dev: drive scroll from console
     if (lenis) {
@@ -62,7 +60,7 @@ export function useScrollDriver() {
         start: 'top 78%',
         onEnter: () => {
           el.classList.add('visible')
-          if (!reducedMotion) el.querySelectorAll('.stat-row dd').forEach(countUp)
+          if (!REDUCED_MOTION) el.querySelectorAll('.stat-row dd').forEach(countUp)
         },
         onLeaveBack: () => el.classList.remove('visible'),
       }))

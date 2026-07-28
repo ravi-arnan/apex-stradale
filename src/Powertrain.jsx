@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore, view } from './store'
+import { REDUCED_MOTION } from './constants'
 
 // A procedural, modern naturally-aspirated V8 + 7-speed dual-clutch transaxle,
 // stood in for the crude low-poly "Engine" box baked into car.glb. Rendered only
@@ -228,11 +229,12 @@ function Flywheel() {
       <mesh rotation-x={Math.PI / 2} material={M.steel}>
         <cylinderGeometry args={[0.33, 0.33, 0.06, 40]} />
       </mesh>
-      {/* ring-gear teeth */}
+      {/* ring-gear teeth, concentric with the disc (the group already carries
+          the flywheel's offset, so these are pure local radius) */}
       {Array.from({ length: 48 }).map((_, i) => {
         const a = (i / 48) * Math.PI * 2
         return (
-          <mesh key={i} position={[Math.cos(a) * 0.34, -0.05 + Math.sin(a) * 0.34, 0.82 - 0.82]} material={M.steel}>
+          <mesh key={i} position={[Math.cos(a) * 0.34, Math.sin(a) * 0.34, 0]} material={M.steel}>
             <boxGeometry args={[0.02, 0.02, 0.05]} />
           </mesh>
         )
@@ -334,7 +336,7 @@ const PARTS = [
   { key: 'crank',    label: 'Crankshaft',     spec: 'Flat-plane, forged',      offset: [0, -1.15, 0],     anchor: [0, -0.05, 0.72], node: null },
   { key: 'block',    label: 'Aluminium block', spec: '90° V8 · 4.5 L',         offset: [0, 0, 0],         anchor: [0.62, -0.32, 0.35], node: () => <Block /> },
   { key: 'headersL', label: 'Exhaust headers', spec: 'Equal-length, Inconel',  offset: [-1.05, -0.7, 0.35], anchor: [-0.62, -0.55, -0.15], node: () => <HeaderBank sx={-1} /> },
-  { key: 'headersR', label: 'Center exit',     spec: 'Titanium tips',          offset: [1.05, -0.7, 0.35], anchor: [0.5, -0.3, -0.5], node: () => <HeaderBank sx={1} /> },
+  { key: 'headersR', label: 'Exhaust headers', spec: 'Center exit, Ti tips',   offset: [1.05, -0.7, 0.35], anchor: [0.5, -0.3, -0.5], node: () => <HeaderBank sx={1} /> },
   { key: 'flywheel', label: 'Flywheel',       spec: 'Twin-plate clutch',       offset: [0, -0.25, 0.75],  anchor: [0, 0.52, 0.82],   node: null },
   { key: 'gearbox',  label: '7-speed DCT',    spec: 'Rear transaxle',          offset: [0, 0.1, 1.55],    anchor: [0, 0.34, 1.44],  node: () => <Gearbox /> },
   { key: 'front',    label: 'Accessory drive', spec: 'Cam & ancillary belt',   offset: [0, 0.2, -1.35],   anchor: [0, 0.32, -0.95], node: null },
@@ -391,14 +393,20 @@ export function Powertrain() {
   useFrame((_, dt) => {
     // only draw when the engine is exposed (Car.jsx sets the shared signal)
     if (rootRef.current) rootRef.current.visible = view.engineExposed
-    // ease the explode factor toward its target and drive each component out
-    anim.t += ((exploded ? 1 : 0) - anim.t) * Math.min(1, dt * 6)
+    // ease the explode factor toward its target and drive each component out.
+    // Reduced motion still gets the breakdown, it just arrives without the fan-out.
+    const target = exploded ? 1 : 0
+    anim.t = REDUCED_MOTION ? target : anim.t + (target - anim.t) * Math.min(1, dt * 6)
     for (const p of PARTS) {
       const g = groupRefs.current[p.key]
       if (g) g.position.copy(_off.set(p.offset[0], p.offset[1], p.offset[2])).multiplyScalar(anim.t)
     }
     // pull back a touch as it opens up so the spread stays in frame
     if (innerRef.current) innerRef.current.scale.setScalar(1 - 0.24 * anim.t)
+
+    // everything below turns on its own, with no user input driving it
+    if (REDUCED_MOTION) return
+
     // turn the bottom end over so the V8 reads as "working" once it's opened up
     if (anim.t > 0.02) {
       anim.turn += dt * 1.6 * anim.t
@@ -407,7 +415,7 @@ export function Powertrain() {
         if (pr?.el) pr.el.position.y = 0.22 + Math.sin(anim.turn + (pr.sx > 0 ? Math.PI : 0)) * 0.06 * anim.t
       }
     }
-    if (fanRef.current) fanRef.current.rotation.z += 0.06
+    if (fanRef.current) fanRef.current.rotation.z += dt * 3.6 // was 0.06/frame, i.e. 60 Hz only
   })
 
   if (!fit) return null

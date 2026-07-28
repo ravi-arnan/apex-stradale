@@ -7,6 +7,10 @@ export const VARIANTS = [
   { name: 'Torched Graphite', swatch: '#3a3d42' },
 ]
 
+// One read, shared by everything that drives autonomous (non scroll-linked)
+// motion: the scroll smoothing, the hero orbit, the wheel spin, the V8 internals.
+export const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 export const WHEEL_SPIN = 0.012 // rad/frame, hero idle-spin (fades out with scroll)
 
 export const COCKPIT_KF = 3 // keyframe index where the left door is fully open

@@ -87,6 +87,22 @@ body {
   display: block;
 }
 
+/* shown in place of the car when the model fails to load */
+.scene-error {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 40;
+  max-width: 26ch;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1.9;
+}
+
 /* ---------- nav ---------- */
 .nav {
   position: fixed;
@@ -317,9 +333,15 @@ main { position: relative; z-index: 5; pointer-events: none; }
   text-transform: uppercase;
   cursor: pointer;
   opacity: 0;
+  /* not tabbable or clickable until there is a car to inspect */
+  visibility: hidden;
+  transition: opacity 500ms ease, visibility 0s 500ms, border-color 250ms, background 250ms;
+}
+body.ready #inspect-toggle {
+  opacity: 1;
+  visibility: visible;
   transition: opacity 500ms ease, border-color 250ms, background 250ms;
 }
-body.ready #inspect-toggle { opacity: 1; }
 #inspect-toggle:hover { border-color: var(--text); background: oklch(21% 0.012 260 / 0.85); }
 #inspect-toggle:focus-visible { outline: 1px solid var(--text); outline-offset: 3px; }
 #inspect-toggle .dot {
@@ -337,7 +359,11 @@ body.inspecting .site-footer,
 body.inspecting #inspect-toggle {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 400ms ease;
+  /* also drop them out of the tab order and the accessibility tree while the
+     inspector owns the screen. Delayed so it lands after the fade out, and
+     instant on the way back in once the class is removed. */
+  visibility: hidden;
+  transition: opacity 400ms ease, visibility 0s 400ms;
 }
 
 #hotspots { position: absolute; inset: 0; pointer-events: none; }

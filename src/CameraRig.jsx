@@ -4,9 +4,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import * as THREE from 'three'
 import { useStore, scroll, view } from './store'
 import { smooth } from './math'
-import { KEYFRAMES, SUBSYSTEMS } from './constants'
+import { KEYFRAMES, SUBSYSTEMS, REDUCED_MOTION } from './constants'
 
-const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const ORBIT_OK = window.matchMedia('(pointer: fine)').matches
 const UP = new THREE.Vector3(0, 1, 0)
 
@@ -64,7 +63,7 @@ export function CameraRig() {
       targetLook.set(smooth(a.look.x, b.look.x, f), smooth(a.look.y, b.look.y, f), smooth(a.look.z, b.look.z, f))
 
       // gentle orbit + pointer parallax in the hero, fading out with scroll
-      if (!reducedMotion) {
+      if (!REDUCED_MOTION) {
         const fade = Math.max(0, 1 - progress * 1.6)
         const angle = (Math.sin(t * 0.18) * 0.35 + rig.pointerX * 0.12) * fade
         targetPos.applyAxisAngle(UP, angle)

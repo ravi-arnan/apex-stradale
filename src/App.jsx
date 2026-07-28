@@ -94,25 +94,37 @@ function Inspector() {
 export default function App() {
   useScrollDriver()
   const ready = useStore((s) => s.ready)
+  const failed = useStore((s) => s.failed)
   const activeSubId = useStore((s) => s.activeSubId)
   const closeInspector = useStore((s) => s.closeInspector)
 
   useEffect(() => { document.body.classList.toggle('ready', ready) }, [ready])
   useEffect(() => { document.body.classList.toggle('inspecting', activeSubId != null) }, [activeSubId])
 
-  // Esc closes the inspector; block wheel scroll while it's open
+  // Esc closes the inspector; block scroll while it's open. touchmove as well as
+  // wheel, or the page keeps scrolling behind the inspector on a phone.
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape' && useStore.getState().activeSubId) closeInspector() }
-    const onWheel = (e) => { if (useStore.getState().activeSubId) e.preventDefault() }
+    const onScroll = (e) => { if (useStore.getState().activeSubId) e.preventDefault() }
     window.addEventListener('keydown', onKey)
-    window.addEventListener('wheel', onWheel, { passive: false })
-    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('wheel', onWheel) }
+    window.addEventListener('wheel', onScroll, { passive: false })
+    window.addEventListener('touchmove', onScroll, { passive: false })
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('wheel', onScroll)
+      window.removeEventListener('touchmove', onScroll)
+    }
   }, [closeInspector])
 
   return (
     <>
       <Loader />
       <Scene />
+      {failed && (
+        <p className="scene-error" role="alert">
+          The car could not be loaded. Reload the page to try again.
+        </p>
+      )}
 
       <header className="nav">
         <span className="nav-mark">APEX</span>
@@ -206,7 +218,7 @@ export default function App() {
         <span>Model: Car Concept, Khronos Group glTF Sample Assets (CC BY 4.0)</span>
       </footer>
 
-      <Inspector />
+      {!failed && <Inspector />}
     </>
   )
 }

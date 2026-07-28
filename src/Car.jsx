@@ -5,11 +5,9 @@ import * as THREE from 'three'
 import { useStore, scroll, view } from './store'
 import { proximity } from './math'
 import {
-  SUBSYSTEMS, WHEEL_SPIN,
+  SUBSYSTEMS, WHEEL_SPIN, REDUCED_MOTION,
   COCKPIT_KF, DOOR_MAX_ANGLE, ENGINE_KF, HOOD_MAX_ANGLE,
 } from './constants'
-
-const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const GHOST_MAT = new THREE.MeshStandardMaterial({
   color: 0x0e1013, metalness: 0, roughness: 1,
@@ -46,8 +44,15 @@ export function Car() {
     return {
       hood: scene.getObjectByName('BodyHood'),
       doorL: scene.getObjectByName('BodyDoorLColor1'),
-      wheels: ['WheelFrontL', 'WheelFrontR', 'WheelRearL', 'WheelRearR']
-        .map((n) => scene.getObjectByName(n)).filter(Boolean),
+      // Spin the rim, tyre and disc, not the whole wheel node: the caliper
+      // (*BrakePad) is a sibling child of the same node but is bolted to the
+      // upright, so it must stay still while the wheel turns. All four children
+      // sit at their wheel's identity rotation, so their local X is the same
+      // axle the parent node carries.
+      wheelSpinners: ['WheelFrontL', 'WheelFrontR', 'WheelRearL', 'WheelRearR']
+        .map((n) => scene.getObjectByName(n))
+        .filter(Boolean)
+        .flatMap((w) => w.children.filter((c) => !/BrakePad/.test(c.name))),
       engineMeshes, // crude glb engine box; hidden whenever the procedural V8 stands in
       variants: userData.gltfExtensions?.KHR_materials_variants?.variants ?? null,
     }
@@ -94,7 +99,7 @@ export function Car() {
   // ---- per-frame articulation: hood, door, wheel idle-spin ----
   const state = useRef({ hood: 0, door: 0, boxHidden: false }).current
   useFrame(() => {
-    const { hood, doorL, wheels, engineMeshes } = nodes
+    const { hood, doorL, wheelSpinners, engineMeshes } = nodes
     const activeSub = SUBSYSTEMS.find((s) => s.id === useStore.getState().activeSubId)
     const progress = scroll.progress
     let hoodTarget = 0
@@ -106,12 +111,12 @@ export function Car() {
     } else {
       hoodTarget = proximity(progress, ENGINE_KF, 1.8) * HOOD_MAX_ANGLE
       doorTarget = proximity(progress, COCKPIT_KF, 1.5) * DOOR_MAX_ANGLE
-      if (!reducedMotion) {
+      if (!REDUCED_MOTION) {
         // wheels idle-spin in the hero, fading out with scroll. rotateX (about each
         // node's own local axle) not rotation.x: the front wheels carry a compound
         // baked rest rotation, so nudging euler.x tumbles them off-axis.
         const fade = Math.max(0, 1 - progress * 1.6)
-        for (const w of wheels) w.rotateX(WHEEL_SPIN * fade)
+        for (const w of wheelSpinners) w.rotateX(WHEEL_SPIN * fade)
       }
     }
 

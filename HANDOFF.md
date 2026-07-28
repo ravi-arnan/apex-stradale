@@ -1,5 +1,16 @@
 # APEX Stradale — Handoff
 
+> **Superseded, read with care.** This describes the original vanilla Three.js
+> build. The site was ported to React Three Fiber in `ebfaedf`, so see
+> `README.md` for the current architecture.
+>
+> Still true: the model notes, the door hinge sign reasoning, the keyframe
+> table, and the performance notes.
+> No longer true: the file list (`src/main.js` is gone, it is now the `src/*.jsx`
+> tree), the `?kf=` / `&door=` / `?inspect=` debug params, and `window.APEX`.
+> None of those survived the port. The headless-Chrome screenshot recipe still
+> works, minus the query params.
+
 A single-page 3D car showroom. Vanilla Three.js + Vite, no framework, no React.
 Scroll drives a cinematic camera through six views of a concept sports car —
 including inside the cockpit (door opens) and over an open engine bay — plus a
