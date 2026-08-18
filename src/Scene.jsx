@@ -1,10 +1,26 @@
-import { Suspense, useEffect, useMemo } from 'react'
+import { Component, Suspense, useEffect, useMemo } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { Car } from './Car'
+import { Powertrain } from './Powertrain'
 import { CameraRig } from './CameraRig'
+import { useStore } from './store'
 import { KEYFRAMES } from './constants'
+
+// A failed useGLTF throws inside the Canvas, which R3F renders in its own
+// reconciler root. Boundaries out in the DOM tree cannot see that, so without
+// this the car silently never appears and the loader sits there for ever.
+// Drop the model, flag the store, and let App show a message instead.
+class ModelBoundary extends Component {
+  state = { failed: false }
+  static getDerivedStateFromError() { return { failed: true } }
+  componentDidCatch(error) {
+    console.error('car.glb failed to load', error)
+    useStore.getState().failLoad()
+  }
+  render() { return this.state.failed ? null : this.props.children }
+}
 
 // PMREM-baked RoomEnvironment, matching the original vanilla lighting.
 function RoomEnv() {
@@ -32,6 +48,8 @@ function ContactShadow() {
     ctx.fillRect(0, 0, 128, 128)
     return new THREE.CanvasTexture(c)
   }, [])
+  // R3F disposes the geometry and material it created for us, but not this
+  useEffect(() => () => tex.dispose(), [tex])
   return (
     <mesh rotation-x={-Math.PI / 2} position-y={0.01} renderOrder={2}>
       <planeGeometry args={[6.5, 3.2]} />
@@ -55,10 +73,13 @@ export function Scene() {
       <RoomEnv />
       <gridHelper args={[120, 60, 0x2a2a30, 0x1c1c21]} />
       <CameraRig />
-      <Suspense fallback={null}>
-        <Car />
-        <ContactShadow />
-      </Suspense>
+      <ModelBoundary>
+        <Suspense fallback={null}>
+          <Car />
+          <Powertrain />
+          <ContactShadow />
+        </Suspense>
+      </ModelBoundary>
     </Canvas>
   )
 }

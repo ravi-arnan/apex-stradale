@@ -7,6 +7,10 @@ export const VARIANTS = [
   { name: 'Torched Graphite', swatch: '#3a3d42' },
 ]
 
+// One read, shared by everything that drives autonomous (non scroll-linked)
+// motion: the scroll smoothing, the hero orbit, the wheel spin, the V8 internals.
+export const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 export const WHEEL_SPIN = 0.012 // rad/frame, hero idle-spin (fades out with scroll)
 
 export const COCKPIT_KF = 3 // keyframe index where the left door is fully open
@@ -32,6 +36,7 @@ export const SUBSYSTEMS = [
     label: 'Powertrain',
     desc: 'Naturally aspirated V8, mounted up front.',
     keep: /Engine|Axle/,
+    swapEngine: true, // hide the crude glb engine box; Powertrain.jsx renders a detailed V8 in its place
     hood: true,
     cam: { pos: [2.4, 2.0, -3.9], look: [0, 0.5, -1.95] },
     hotspots: [
@@ -59,7 +64,7 @@ export const SUBSYSTEMS = [
     desc: 'A single central seat, two set behind.',
     keep: /Interior/,
     door: true,
-    cam: { pos: [-2.9, 1.6, 0.3], look: [0, 0.7, -0.75] },
+    cam: { pos: [-1.75, 1.12, 0.42], look: [0.05, 0.78, -0.72] },
     hotspots: [
       { node: 'InteriorSteeringWheel01', label: 'Steering', spec: 'Squared-off yoke' },
       { node: 'InteriorSeatsColor2', label: 'Driver seat', spec: 'Central position' },
